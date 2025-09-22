@@ -39,30 +39,39 @@ export const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, onEdit, onDe
 
   useEffect(() => {
     if (downloadingInvoice && invoicePreviewRef.current) {
-      // These libraries are loaded via script tags in index.html
+      const generatePdf = () => {
+        const { jsPDF } = jspdf;
+        const elementToCapture = invoicePreviewRef.current;
+        
+        if (!elementToCapture) return;
+        
+        html2canvas(elementToCapture, { 
+          scale: 2, // Higher scale for better quality
+          useCORS: true,
+        }).then((canvas) => {
+            const imgData = canvas.toDataURL('image/png');
+            
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'px',
+                format: [elementToCapture.offsetWidth, elementToCapture.offsetHeight]
+            });
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, elementToCapture.offsetWidth, elementToCapture.offsetHeight);
+            pdf.save(`Invoice-${downloadingInvoice.invoiceNumber}.pdf`);
 
-      const { jsPDF } = jspdf;
-      const elementToCapture = invoicePreviewRef.current;
+            setDownloadingInvoice(null); // Reset state after download
+        }).catch(err => {
+            console.error("Error generating PDF", err);
+            setDownloadingInvoice(null);
+        });
+      };
       
-      html2canvas(elementToCapture, { 
-        scale: 2, // Higher scale for better quality
-      }).then((canvas) => {
-          const imgData = canvas.toDataURL('image/png');
-          
-          const pdf = new jsPDF({
-              orientation: 'p',
-              unit: 'px',
-              format: [elementToCapture.offsetWidth, elementToCapture.offsetHeight]
-          });
-          
-          pdf.addImage(imgData, 'PNG', 0, 0, elementToCapture.offsetWidth, elementToCapture.offsetHeight);
-          pdf.save(`Invoice-${downloadingInvoice.invoiceNumber}.pdf`);
+      // Use a short timeout to ensure the off-screen component has fully rendered before capturing.
+      // This fixes inconsistent formatting issues.
+      const timer = setTimeout(generatePdf, 100);
 
-          setDownloadingInvoice(null); // Reset state after download
-      }).catch(err => {
-          console.error("Error generating PDF", err);
-          setDownloadingInvoice(null);
-      });
+      return () => clearTimeout(timer);
     }
   }, [downloadingInvoice]);
 
