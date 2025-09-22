@@ -80,5 +80,6 @@ export interface CompanyProfile {
   companyAcronym?: string;
   logo?: string; // base64 encoded image
   companySeal?: string; // base64 encoded image
+  authorizedSignature?: string; // base64 encoded image
   defaultBankDetails: BankDetails;
 }

@@ -9,6 +9,7 @@ const initialProfile: CompanyProfile = {
     companyAcronym: 'CN',
     logo: '',
     companySeal: '',
+    authorizedSignature: '',
     defaultBankDetails: {
         accountName: 'Your Company Inc.',
         accountNumber: '1234567890',

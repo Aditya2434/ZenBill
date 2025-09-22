@@ -48,6 +48,17 @@ export const Profile: React.FC<ProfileProps> = ({ profile, updateProfile }) => {
         }
     };
 
+    const handleSignatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({ ...prev, authorizedSignature: reader.result as string }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         updateProfile(formData);
@@ -94,20 +105,38 @@ export const Profile: React.FC<ProfileProps> = ({ profile, updateProfile }) => {
                     </div>
                 </div>
 
-                <div className="border-t pt-6">
-                    <label htmlFor="seal-upload" className="block text-sm font-medium text-gray-700">Company Seal / Stamp</label>
-                    <div className="mt-2 flex items-center space-x-4">
-                        <div className="w-24 h-24 rounded-full border border-gray-300 flex items-center justify-center overflow-hidden">
-                            {formData.companySeal ? (
-                                <img src={formData.companySeal} alt="Company Seal" className="w-full h-full object-contain" />
-                            ) : (
-                                <span className="text-xs text-gray-400">No Seal</span>
-                            )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
+                    <div>
+                        <label htmlFor="seal-upload" className="block text-sm font-medium text-gray-700">Company Seal / Stamp</label>
+                        <div className="mt-2 flex items-center space-x-4">
+                            <div className="w-24 h-24 rounded-full border border-gray-300 flex items-center justify-center overflow-hidden">
+                                {formData.companySeal ? (
+                                    <img src={formData.companySeal} alt="Company Seal" className="w-full h-full object-contain" />
+                                ) : (
+                                    <span className="text-xs text-gray-400">No Seal</span>
+                                )}
+                            </div>
+                            <input type="file" id="seal-upload" accept="image/*" onChange={handleSealChange} className="hidden" />
+                            <label htmlFor="seal-upload" className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700">
+                                Change
+                            </label>
                         </div>
-                        <input type="file" id="seal-upload" accept="image/*" onChange={handleSealChange} className="hidden" />
-                        <label htmlFor="seal-upload" className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700">
-                            Change
-                        </label>
+                    </div>
+                    <div>
+                        <label htmlFor="signature-upload" className="block text-sm font-medium text-gray-700">Authorized Signature (Optional)</label>
+                        <div className="mt-2 flex items-center space-x-4">
+                            <div className="w-48 h-24 rounded-md border border-gray-300 flex items-center justify-center overflow-hidden">
+                                {formData.authorizedSignature ? (
+                                    <img src={formData.authorizedSignature} alt="Authorized Signature" className="w-full h-full object-contain" />
+                                ) : (
+                                    <span className="text-xs text-gray-400">No Signature</span>
+                                )}
+                            </div>
+                            <input type="file" id="signature-upload" accept="image/*" onChange={handleSignatureChange} className="hidden" />
+                            <label htmlFor="signature-upload" className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700">
+                                Change
+                            </label>
+                        </div>
                     </div>
                 </div>
 

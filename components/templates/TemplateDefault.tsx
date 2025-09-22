@@ -69,7 +69,9 @@ export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>((
                 {/* Header */}
                 <div className="text-center">
                     {profile.logo ? (
-                        <img src={profile.logo} alt="Company Logo" className="h-20 mx-auto mb-2 object-contain" />
+                        <div className="flex justify-center items-center" style={{minHeight: '80px'}}>
+                            <img src={profile.logo} alt="Company Logo" className="h-20 mx-auto mb-2 object-contain" />
+                        </div>
                     ) : (
                         <h1 className="text-2xl font-bold">LOGO</h1>
                     )}
@@ -115,29 +117,33 @@ export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>((
                 </div>
 
                 {/* Items */}
-                <div>
-                  <div className="grid grid-cols-[3fr,14fr,4fr,4fr,4fr,4fr,5fr] border-b border-black font-bold text-center">
-                    <div className="p-1 border-r border-black">S.NO</div>
-                    <div className="p-1 border-r border-black">DESCRIPTION OF GOODS</div>
-                    <div className="p-1 border-r border-black">HSN CODE</div>
-                    <div className="p-1 border-r border-black">UOM</div>
-                    <div className="p-1 border-r border-black">QUANTITY</div>
-                    <div className="p-1 border-r border-black">RATE</div>
-                    <div className="p-1">AMOUNT</div>
-                  </div>
-                  <div className="">
-                    {invoice.items.map((item, index) => (
-                      <div key={item.id} className="grid grid-cols-[3fr,14fr,4fr,4fr,4fr,4fr,5fr] items-start border-b">
-                        <div className="text-center p-1">{index + 1}</div>
-                        <div className="p-1 break-words">{item.description}</div>
-                        <div className="p-1 text-center">{item.hsnCode}</div>
-                        <div className="p-1 text-center">{item.uom}</div>
-                        <div className="p-1 text-right">{item.quantity}</div>
-                        <div className="p-1 text-right">₹{item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                        <div className="text-right p-1">₹{(item.quantity * item.unitPrice).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                      </div>
-                    ))}
-                  </div>
+                 <div style={{ paddingBottom: '52px' }}>
+                    <table className="w-full border-collapse border border-black text-sm text-black">
+                        <thead>
+                            <tr className="text-center font-bold">
+                                <th className="py-3 px-1 border border-black" style={{ width: '5%' }}>S.NO</th>
+                                <th className="py-3 px-1 border border-black" style={{ width: '40%' }}>DESCRIPTION OF GOODS</th>
+                                <th className="py-3 px-1 border border-black" style={{ width: '10%' }}>HSN CODE</th>
+                                <th className="py-3 px-1 border border-black" style={{ width: '10%' }}>UOM</th>
+                                <th className="py-3 px-1 border border-black" style={{ width: '10%' }}>QUANTITY</th>
+                                <th className="py-3 px-1 border border-black" style={{ width: '10%' }}>RATE</th>
+                                <th className="py-3 px-1 border border-black" style={{ width: '15%' }}>AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {invoice.items && invoice.items.map((item, index) => (
+                                <tr key={item.id}>
+                                    <td className="py-3 px-1 border border-black text-center align-middle">{index + 1}</td>
+                                    <td className="py-3 px-1 border border-black break-words align-middle">{item.description}</td>
+                                    <td className="py-3 px-1 border border-black text-center align-middle">{item.hsnCode}</td>
+                                    <td className="py-3 px-1 border border-black text-center align-middle">{item.uom}</td>
+                                    <td className="py-3 px-1 border border-black text-right align-middle">{item.quantity}</td>
+                                    <td className="py-3 px-1 border border-black text-right align-middle">{`₹${item.unitPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</td>
+                                    <td className="py-3 px-1 border border-black text-right align-middle">{`₹${(item.quantity * item.unitPrice).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
 
                 {/* Totals */}
@@ -190,9 +196,18 @@ export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>((
                              )}
                              Common seal
                          </div>
-                         <div className="text-right">For {profile.companyName}.</div>
+                         <div className="text-right">
+                             <p>For {profile.companyName}.</p>
+                             {profile.authorizedSignature ? (
+                                 <div className="h-20 flex justify-end items-center my-2">
+                                     <img src={profile.authorizedSignature} alt="Authorized Signature" className="max-h-full max-w-full object-contain" />
+                                 </div>
+                             ) : (
+                                 <div className="h-24"></div>
+                             )}
+                             <p className="font-bold">AUTHORISED.</p>
+                         </div>
                     </div>
-                     <div className="text-right pt-24 font-bold text-xs">AUTHORISED.</div>
                 </div>
             </div>
         </div>

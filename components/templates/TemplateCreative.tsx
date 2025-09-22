@@ -139,7 +139,15 @@ export const TemplateCreative = React.forwardRef<HTMLDivElement, TemplateProps>(
                 <div className="text-center">
                     <p className="font-semibold text-gray-700">For {profile.companyName}</p>
                     {profile.companySeal && <img src={profile.companySeal} alt="Seal" className="h-20 w-20 mx-auto my-2 opacity-70 object-contain" />}
-                    <p className="mt-4 pt-4 border-t border-gray-200">Authorized Signature</p>
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                        {profile.authorizedSignature ? (
+                            <div className="h-16 flex justify-center items-center">
+                                <img src={profile.authorizedSignature} alt="Authorized Signature" className="max-h-full max-w-full object-contain" />
+                            </div>
+                        ) : (
+                             <p>Authorized Signature</p>
+                        )}
+                    </div>
                 </div>
             </footer>
         </div>

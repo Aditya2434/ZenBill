@@ -213,8 +213,15 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
   
   const proceedWithSubmit = () => {
     setFormError(null);
+
+    // Filter out items with no description before saving
+    const cleanedInvoiceData = {
+        ...invoice,
+        items: invoice.items.filter(item => item.description.trim() !== ''),
+    };
+
     if (existingInvoice && updateInvoice) {
-      updateInvoice(invoice as Invoice);
+      updateInvoice(cleanedInvoiceData as Invoice);
       setView('invoices');
     } else if (addInvoice) {
       const finalSequential = invoiceNumberSequential.padStart(3, '0');
@@ -234,7 +241,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
       }
 
       const invoiceToSave = {
-          ...(invoice as Omit<Invoice, 'id' | 'invoiceNumber'>),
+          ...(cleanedInvoiceData as Omit<Invoice, 'id' | 'invoiceNumber'>),
           invoiceNumber: fullInvoiceNumber,
       };
 

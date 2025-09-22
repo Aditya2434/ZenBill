@@ -121,9 +121,16 @@ export const TemplateSimple = React.forwardRef<HTMLDivElement, TemplateProps>(({
                      <p>{invoice.bankDetails?.bankName} ({invoice.bankDetails?.ifsc})</p>
                 </div>
                  <div className="text-center">
-                    <p className="font-semibold text-gray-600 mb-2">Thank you for your business.</p>
+                    <p className="font-semibold text-gray-600 mb-2">For {profile.companyName}</p>
                     {profile.companySeal && <img src={profile.companySeal} alt="Seal" className="h-20 w-20 mx-auto my-2 opacity-70 object-contain" />}
-                    <p>For {profile.companyName}</p>
+                     {profile.authorizedSignature && (
+                         <div className="h-16 flex justify-center items-center my-2">
+                             <img src={profile.authorizedSignature} alt="Authorized Signature" className="max-h-full max-w-full object-contain" />
+                         </div>
+                    )}
+                    <p className={`pt-2 border-t border-gray-200 ${profile.authorizedSignature ? 'mt-2' : 'mt-12'}`}>
+                        Authorised Signatory
+                    </p>
                  </div>
             </div>
         </div>
