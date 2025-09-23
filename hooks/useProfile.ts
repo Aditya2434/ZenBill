@@ -2,20 +2,20 @@ import { useState, useCallback } from 'react';
 import { CompanyProfile } from '../types';
 
 const initialProfile: CompanyProfile = {
-    companyName: '(COMPANY NAME)',
-    companyAddress: '(COMPANY ADDRESS)',
-    gstin: 'YOURGSTIN',
-    pan: 'YOURPAN',
-    companyAcronym: 'CN',
+    companyName: 'Your Company Name',
+    companyAddress: '',
+    gstin: '',
+    pan: '',
+    companyAcronym: '',
     logo: '',
     companySeal: '',
     authorizedSignature: '',
     defaultBankDetails: {
-        accountName: 'Your Company Inc.',
-        accountNumber: '1234567890',
-        bankName: 'Global Bank',
-        branch: 'Main Street Branch',
-        ifsc: 'GBIN0001234',
+        accountName: '',
+        accountNumber: '',
+        bankName: '',
+        branch: '',
+        ifsc: '',
     },
 };
 

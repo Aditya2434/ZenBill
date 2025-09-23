@@ -33,14 +33,24 @@ const StatusBadge: React.FC<{ status: InvoiceStatus }> = ({ status }) => {
   );
 };
 
+// FIX: Added a helper function to calculate all invoice totals needed by InvoicePreview.
+const calculateInvoiceTotals = (invoice: Invoice) => {
+    const subtotal = invoice.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    const cgstAmount = subtotal * ((invoice.cgstRate || 0) / 100);
+    const sgstAmount = subtotal * ((invoice.sgstRate || 0) / 100);
+    const igstAmount = subtotal * ((invoice.igstRate || 0) / 100);
+    const totalTax = cgstAmount + sgstAmount + igstAmount;
+    const total = subtotal + totalTax;
+    return { subtotal, cgstAmount, sgstAmount, igstAmount, totalTax, total };
+};
+
 export const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, onEdit, onDelete, setView, profile }) => {
   const [downloadingInvoice, setDownloadingInvoice] = useState<Invoice | null>(null);
   const invoicePreviewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (downloadingInvoice && invoicePreviewRef.current) {
-      const generatePdf = () => {
-        const { jsPDF } = jspdf;
+      const generatePdf = (invoice: Invoice) => {
         const elementToCapture = invoicePreviewRef.current;
         
         if (!elementToCapture) return;
@@ -48,19 +58,26 @@ export const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, onEdit, onDe
         html2canvas(elementToCapture, { 
           scale: 2, // Higher scale for better quality
           useCORS: true,
+          logging: false,
+          width: elementToCapture.offsetWidth,
+          height: elementToCapture.offsetHeight
         }).then((canvas) => {
             const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = jspdf;
+            
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
             
             const pdf = new jsPDF({
-                orientation: 'p',
+                orientation: canvasWidth > canvasHeight ? 'l' : 'p',
                 unit: 'px',
-                format: [elementToCapture.offsetWidth, elementToCapture.offsetHeight]
+                format: [canvasWidth, canvasHeight]
             });
-            
-            pdf.addImage(imgData, 'PNG', 0, 0, elementToCapture.offsetWidth, elementToCapture.offsetHeight);
-            pdf.save(`Invoice-${downloadingInvoice.invoiceNumber}.pdf`);
 
-            setDownloadingInvoice(null); // Reset state after download
+            pdf.addImage(imgData, 'PNG', 0, 0, canvasWidth, canvasHeight);
+            pdf.save(`Invoice-${invoice.invoiceNumber}.pdf`);
+
+            setDownloadingInvoice(null);
         }).catch(err => {
             console.error("Error generating PDF", err);
             setDownloadingInvoice(null);
@@ -68,8 +85,7 @@ export const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, onEdit, onDe
       };
       
       // Use a short timeout to ensure the off-screen component has fully rendered before capturing.
-      // This fixes inconsistent formatting issues.
-      const timer = setTimeout(generatePdf, 100);
+      const timer = setTimeout(() => generatePdf(downloadingInvoice), 100);
 
       return () => clearTimeout(timer);
     }
@@ -77,14 +93,6 @@ export const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, onEdit, onDe
 
   const handleDownload = (invoice: Invoice) => {
     setDownloadingInvoice(invoice);
-  };
-  
-  const calculateTotal = (invoice: Invoice) => {
-    const subtotal = invoice.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-    const cgst = subtotal * ((invoice.cgstRate || 0) / 100);
-    const sgst = subtotal * ((invoice.sgstRate || 0) / 100);
-    const igst = subtotal * ((invoice.igstRate || 0) / 100);
-    return subtotal + cgst + sgst + igst;
   };
 
   return (
@@ -122,7 +130,7 @@ export const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, onEdit, onDe
                 <td className="px-6 py-4">{invoice.client.name}</td>
                 <td className="px-6 py-4">{invoice.issueDate}</td>
                 <td className="px-6 py-4">{invoice.dueDate}</td>
-                <td className="px-6 py-4 font-medium text-gray-800">₹{calculateTotal(invoice).toLocaleString('en-IN')}</td>
+                <td className="px-6 py-4 font-medium text-gray-800">₹{calculateInvoiceTotals(invoice).total.toLocaleString('en-IN')}</td>
                 <td className="px-6 py-4">
                   <StatusBadge status={invoice.status} />
                 </td>
@@ -141,7 +149,7 @@ export const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, onEdit, onDe
       {/* This is the off-screen component for PDF generation */}
       {downloadingInvoice && (
         <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -10 }}>
-            <InvoicePreview ref={invoicePreviewRef} invoice={downloadingInvoice} profile={profile} />
+            <InvoicePreview ref={invoicePreviewRef} invoice={downloadingInvoice} profile={profile} {...calculateInvoiceTotals(downloadingInvoice)} />
         </div>
       )}
     </div>

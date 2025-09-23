@@ -1,8 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Invoice, InvoiceItem, InvoiceStatus, Client, CompanyProfile } from '../types';
 import { View } from '../App';
-import { PlusIcon, TrashIcon } from './icons';
+import { PlusIcon, TrashIcon, DownloadIcon } from './icons';
 import { useInvoices, generateNextInvoiceNumber, getHighestInvoiceNumber } from '../hooks/useInvoices';
+import { InvoicePreview } from './InvoicePreview';
+
+declare const html2canvas: any;
+declare const jspdf: any;
 
 interface InvoiceFormProps {
   existingInvoice?: Invoice | null;
@@ -15,7 +19,7 @@ interface InvoiceFormProps {
 
 function numberToWordsINR(num: number): string {
     const a = ['', 'ONE ', 'TWO ', 'THREE ', 'FOUR ', 'FIVE ', 'SIX ', 'SEVEN ', 'EIGHT ', 'NINE ', 'TEN ', 'ELEVEN ', 'TWELVE ', 'THIRTEEN ', 'FOURTEEN ', 'FIFTEEN ', 'SIXTEEN ', 'SEVENTEEN ', 'EIGHTEEN ', 'NINETEEN '];
-    const b = ['', '', 'TWENTY ', 'THIRTY ', 'FORTY ', 'FIFTY ', 'SIXTY ', 'SEVENTY ', 'EIGHTY ', 'NINETY '];
+    const b = ['', '', 'TWENTY ', 'THIRTY ', 'FORTY ', 'FIFTY ', 'SIXTY ', 'SEVENTY ', 'EIGHTY ', 'NINETETY '];
 
     const [integerPartStr] = num.toFixed(2).split('.');
     let n = parseInt(integerPartStr, 10);
@@ -103,7 +107,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
   const [invoiceNumberSequential, setInvoiceNumberSequential] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [showEmptyInvoiceModal, setShowEmptyInvoiceModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const { clients } = useInvoices();
+  const previewRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (existingInvoice) {
@@ -201,23 +208,85 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
     }));
   };
 
-  const { subtotal, cgstAmount, sgstAmount, igstAmount, totalTax, total } = useMemo(() => {
-    const subtotal = invoice.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-    const cgstAmount = subtotal * ((invoice.cgstRate || 0) / 100);
-    const sgstAmount = subtotal * ((invoice.sgstRate || 0) / 100);
-    const igstAmount = subtotal * ((invoice.igstRate || 0) / 100);
-    const totalTax = cgstAmount + sgstAmount + igstAmount;
-    const total = subtotal + totalTax;
-    return { subtotal, cgstAmount, sgstAmount, igstAmount, totalTax, total };
-  }, [invoice.items, invoice.cgstRate, invoice.sgstRate, invoice.igstRate]);
+  const {
+    cleanedItems,
+    subtotal,
+    cgstAmount,
+    sgstAmount,
+    igstAmount,
+    totalTax,
+    total,
+    previewInvoiceData
+  } = useMemo(() => {
+    const itemsToProcess = invoice.items.filter(item => item.description.trim() !== '');
+
+    const sub = itemsToProcess.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
+    const cgst = sub * ((invoice.cgstRate || 0) / 100);
+    const sgst = sub * ((invoice.sgstRate || 0) / 100);
+    const igst = sub * ((invoice.igstRate || 0) / 100);
+    const tax = cgst + sgst + igst;
+    const grandTotal = sub + tax;
+
+    const fullInvoiceNumber = 'invoiceNumber' in invoice 
+        ? invoice.invoiceNumber 
+        : `${invoiceNumberPrefix}${invoiceNumberSequential.padStart(3, '0')}`;
+    
+    const previewData = {
+        ...emptyInvoice,
+        ...invoice,
+        items: itemsToProcess,
+        id: 'invoiceNumber' in invoice ? (invoice as Invoice).id : 'preview-id',
+        invoiceNumber: fullInvoiceNumber,
+    } as Invoice;
+
+    return {
+        cleanedItems: itemsToProcess,
+        subtotal: sub,
+        cgstAmount: cgst,
+        sgstAmount: sgst,
+        igstAmount: igst,
+        totalTax: tax,
+        total: grandTotal,
+        previewInvoiceData: previewData
+    };
+  }, [invoice, invoiceNumberPrefix, invoiceNumberSequential, emptyInvoice, profile]);
+
+  
+  const handleDownloadPdf = () => {
+    const elementToCapture = previewRef.current;
+    if (!elementToCapture) return;
+
+    html2canvas(elementToCapture, { 
+        scale: 2, 
+        useCORS: true,
+        logging: false,
+        width: elementToCapture.offsetWidth,
+        height: elementToCapture.offsetHeight
+    }).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = jspdf;
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        
+        const pdf = new jsPDF({
+            orientation: canvasWidth > canvasHeight ? 'l' : 'p',
+            unit: 'px',
+            format: [canvasWidth, canvasHeight]
+        });
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, canvasWidth, canvasHeight);
+        pdf.save(`Invoice-${previewInvoiceData.invoiceNumber}.pdf`);
+    }).catch(err => {
+        console.error("Error generating PDF", err);
+    });
+  };
   
   const proceedWithSubmit = () => {
     setFormError(null);
 
-    // Filter out items with no description before saving
     const cleanedInvoiceData = {
         ...invoice,
-        items: invoice.items.filter(item => item.description.trim() !== ''),
+        items: cleanedItems,
     };
 
     if (existingInvoice && updateInvoice) {
@@ -257,7 +326,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const hasItems = invoice.items.some(item => item.description.trim() !== '');
+    const hasItems = cleanedItems.length > 0;
 
     if (!hasItems && !existingInvoice) {
         setShowEmptyInvoiceModal(true);
@@ -305,12 +374,56 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
                 </div>
             </div>
         )}
+        {showPreviewModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={() => setShowPreviewModal(false)}>
+                <div className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                    <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
+                        <h3 className="text-xl font-semibold text-gray-800">Invoice Preview</h3>
+                        <div className="flex items-center space-x-3">
+                            <button 
+                                onClick={handleDownloadPdf} 
+                                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                <DownloadIcon className="w-4 h-4 mr-2"/>
+                                Download PDF
+                            </button>
+                            <button 
+                                onClick={() => setShowPreviewModal(false)} 
+                                className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
+                            >
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div className="overflow-y-auto bg-gray-200 p-8">
+                        <div className="flex justify-center">
+                             <div className="transform scale-[0.9] origin-top shadow-lg">
+                                <InvoicePreview
+                                    ref={previewRef}
+                                    invoice={previewInvoiceData}
+                                    profile={profile}
+                                    subtotal={subtotal}
+                                    cgstAmount={cgstAmount}
+                                    sgstAmount={sgstAmount}
+                                    igstAmount={igstAmount}
+                                    totalTax={totalTax}
+                                    total={total}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-gray-800">{existingInvoice ? 'Edit Invoice' : 'Create Invoice'}</h2>
                 <div>
                     <button type="button" onClick={() => setView('invoices')} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 mr-2">
                         Cancel
+                    </button>
+                    <button type="button" onClick={() => setShowPreviewModal(true)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 mr-2">
+                        Print Preview
                     </button>
                     <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700">
                         {existingInvoice ? 'Save Changes' : 'Save Invoice'}
@@ -320,15 +433,29 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
 
             <div className="border-2 border-black p-4 space-y-2 text-sm">
                 {/* Header */}
-                <div className="text-center">
-                    {profile.logo ? (
-                        <img src={profile.logo} alt="Company Logo" className="h-20 mx-auto mb-2 object-contain"/>
-                    ) : (
-                        <h1 className="text-2xl font-bold">LOGO</h1>
-                    )}
-                    <p className="font-bold">{profile.companyName}</p>
-                    <p>{profile.companyAddress}</p>
-                    <p>GSTIN: {profile.gstin} &nbsp;&nbsp; PAN: {profile.pan}</p>
+                <div className="flex justify-between items-start">
+                    {/* Section 1: Logo */}
+                    <div className="company-logo" style={{ width: '84px', flexShrink: 0 }}>
+                        {profile.logo ? (
+                            <img src={profile.logo} alt="Company Logo" className="h-20 w-20 object-contain"/>
+                        ) : (
+                            <div className="h-20 w-20 flex items-center justify-center bg-gray-100 rounded">
+                                <span className="text-sm font-bold">LOGO</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Section 2: Company Details */}
+                    <div className="company-name text-center px-4 flex-grow">
+                        <p className="font-bold text-3xl break-words">{profile.companyName}</p>
+                        <p className="text-sm">{profile.companyAddress}</p>
+                        <p className="text-sm">GSTIN: {profile.gstin} &nbsp;&nbsp; PAN: {profile.pan}</p>
+                    </div>
+
+                    {/* Section 3: Empty Placeholder */}
+                    <div className="empty-placeholder" style={{ width: '84px', flexShrink: 0, padding: '16px' }}>
+                        {/* Empty as per request */}
+                    </div>
                 </div>
                 <h2 className="text-center font-bold text-lg underline">TAX INVOICE</h2>
 
@@ -474,10 +601,26 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
                     
                     <div className="grid grid-cols-3 pt-4 text-xs">
                          <div>Subject to <input name="jurisdiction" value={invoice.jurisdiction} onChange={handleInputChange} className="w-24 p-1 border border-gray-300 bg-white text-gray-900"/> Jurisdiction</div>
-                         <div className="text-center">Common seal</div>
-                         <div className="text-right">For {profile.companyName}.</div>
+                         <div className="text-center">
+                             {profile.companySeal && (
+                                <div className="h-24 flex items-center justify-center">
+                                    <img src={profile.companySeal} alt="Company Seal" className="max-h-full max-w-full object-contain" />
+                                </div>
+                             )}
+                             Common seal
+                         </div>
+                         <div className="text-right">
+                             <p>For {profile.companyName}.</p>
+                             {profile.authorizedSignature ? (
+                                 <div className="h-20 flex justify-end items-center my-2">
+                                     <img src={profile.authorizedSignature} alt="Authorized Signature" className="max-h-full max-w-full object-contain" />
+                                 </div>
+                             ) : (
+                                 <div className="h-24"></div>
+                             )}
+                             <p className="font-bold">AUTHORISED.</p>
+                         </div>
                     </div>
-                     <div className="text-right pt-12 font-bold text-xs">AUTHORISED.</div>
                 </div>
 
             </div>

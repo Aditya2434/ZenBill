@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CompanyProfile } from '../types';
 
 interface ProfileProps {
@@ -9,6 +9,10 @@ interface ProfileProps {
 export const Profile: React.FC<ProfileProps> = ({ profile, updateProfile }) => {
     const [formData, setFormData] = useState<CompanyProfile>(profile);
     const [feedback, setFeedback] = useState('');
+
+    useEffect(() => {
+        setFormData(profile);
+    }, [profile]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;

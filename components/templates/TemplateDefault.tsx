@@ -44,6 +44,12 @@ function numberToWordsINR(num: number): string {
 interface TemplateProps {
   invoice: Invoice;
   profile: CompanyProfile;
+  subtotal: number;
+  cgstAmount: number;
+  sgstAmount: number;
+  igstAmount: number;
+  totalTax: number;
+  total: number;
 }
 
 const FormFieldPreview = ({ label, value, fullWidth = false }: { label: string; value: any; fullWidth?: boolean }) => (
@@ -54,30 +60,35 @@ const FormFieldPreview = ({ label, value, fullWidth = false }: { label: string; 
     </div>
 );
 
-export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>(({ invoice, profile }, ref) => {
-    
-    const subtotal = invoice.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-    const cgstAmount = subtotal * ((invoice.cgstRate || 0) / 100);
-    const sgstAmount = subtotal * ((invoice.sgstRate || 0) / 100);
-    const igstAmount = subtotal * ((invoice.igstRate || 0) / 100);
-    const totalTax = cgstAmount + sgstAmount + igstAmount;
-    const total = subtotal + totalTax;
+export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>(({ invoice, profile, subtotal, cgstAmount, sgstAmount, igstAmount, totalTax, total }, ref) => {
 
     return (
-        <div ref={ref} className="bg-white p-4 text-gray-900" style={{ width: '800px', fontFamily: 'sans-serif' }}>
+        <div ref={ref} className="bg-white p-4 text-gray-900" style={{ width: '800px', fontFamily: "'Inter', sans-serif", letterSpacing: '0.2px' }}>
              <div className="border-2 border-black p-4 space-y-2 text-sm">
                 {/* Header */}
-                <div className="text-center">
-                    {profile.logo ? (
-                        <div className="flex justify-center items-center" style={{minHeight: '80px'}}>
-                            <img src={profile.logo} alt="Company Logo" className="h-20 mx-auto mb-2 object-contain" />
-                        </div>
-                    ) : (
-                        <h1 className="text-2xl font-bold">LOGO</h1>
-                    )}
-                    <p className="font-bold">{profile.companyName}</p>
-                    <p>{profile.companyAddress}</p>
-                    <p>GSTIN: {profile.gstin} &nbsp;&nbsp; PAN: {profile.pan}</p>
+                <div className="flex justify-between items-start">
+                    {/* Section 1: Logo */}
+                    <div className="company-logo" style={{ width: '84px', flexShrink: 0 }}>
+                        {profile.logo ? (
+                            <img src={profile.logo} alt="Company Logo" className="object-contain" style={{height: '80px', width: '80px'}} />
+                        ) : (
+                            <div className="flex items-center justify-center bg-gray-100 rounded" style={{height: '80px', width: '80px'}}>
+                                <span className="text-sm font-bold">LOGO</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Section 2: Company Details */}
+                    <div className="company-name text-center px-4 flex-grow">
+                        <p className="font-bold break-words" style={{fontSize: '2rem', lineHeight: '2.25rem'}}>{profile.companyName}</p>
+                        <p>{profile.companyAddress}</p>
+                        <p>GSTIN: {profile.gstin} &nbsp;&nbsp; PAN: {profile.pan}</p>
+                    </div>
+                    
+                    {/* Section 3: Empty Placeholder */}
+                    <div className="empty-placeholder" style={{ width: '84px', flexShrink: 0, padding: '16px' }}>
+                        {/* Empty as per request */}
+                    </div>
                 </div>
                 <h2 className="text-center font-bold text-lg underline">TAX INVOICE</h2>
 
@@ -101,14 +112,14 @@ export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>((
                 {/* Billed To / Shipped To */}
                 <div className="grid grid-cols-2 border-b border-black">
                     <div className="border-r border-black p-2">
-                        <h3 className="font-bold bg-gray-200 text-center mb-2">DETAIL OF RECEIVER (BILLED TO)</h3>
+                        <div className="font-bold bg-gray-200 text-center mb-2 flex items-center justify-center py-1 whitespace-nowrap">DETAIL OF RECEIVER (BILLED TO)</div>
                         <FormFieldPreview label="Name" value={invoice.client.name} />
                         <FormFieldPreview label="Address" value={invoice.client.address} />
                         <FormFieldPreview label="GSTIN" value={invoice.client.gstin} />
                         <FormFieldPreview label="State & Code" value={`${invoice.client.state || ''} ${invoice.client.stateCode || ''}`} />
                     </div>
                     <div className="p-2">
-                        <h3 className="font-bold bg-gray-200 text-center mb-2">DETAIL OF RECEIVER (SHIPPED TO)</h3>
+                        <div className="font-bold bg-gray-200 text-center mb-2 flex items-center justify-center py-1 whitespace-nowrap">DETAIL OF RECEIVER (SHIPPED TO)</div>
                         <FormFieldPreview label="Name" value={invoice.shippingDetails?.name} />
                         <FormFieldPreview label="Address" value={invoice.shippingDetails?.address} />
                         <FormFieldPreview label="GSTIN" value={invoice.shippingDetails?.gstin} />
@@ -117,8 +128,8 @@ export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>((
                 </div>
 
                 {/* Items */}
-                 <div style={{ paddingBottom: '52px' }}>
-                    <table className="w-full border-collapse border border-black text-sm text-black">
+                 <div style={{ paddingBottom: '20px' }}>
+                    <table className="w-full border-collapse border border-black text-sm text-black" style={{ tableLayout: 'fixed' }}>
                         <thead>
                             <tr className="text-center font-bold">
                                 <th className="py-3 px-1 border border-black" style={{ width: '5%' }}>S.NO</th>
@@ -134,7 +145,7 @@ export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>((
                             {invoice.items && invoice.items.map((item, index) => (
                                 <tr key={item.id}>
                                     <td className="py-3 px-1 border border-black text-center align-middle">{index + 1}</td>
-                                    <td className="py-3 px-1 border border-black break-words align-middle">{item.description}</td>
+                                    <td className="py-3 px-1 border border-black align-middle" style={{ wordBreak: 'break-word' }}>{item.description}</td>
                                     <td className="py-3 px-1 border border-black text-center align-middle">{item.hsnCode}</td>
                                     <td className="py-3 px-1 border border-black text-center align-middle">{item.uom}</td>
                                     <td className="py-3 px-1 border border-black text-right align-middle">{item.quantity}</td>
@@ -152,21 +163,34 @@ export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>((
                        <FormFieldPreview label="Total Amount in Words INR" value={numberToWordsINR(total)} fullWidth={true}/>
                     </div>
                     <div className="p-2 text-sm">
-                        <div className="flex justify-between"><span className="font-semibold">Total Amount before Tax</span> <span>₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
-                        <div className="flex justify-between items-center">
-                            <span className="font-semibold">Add: CGST @ {invoice.cgstRate || 0}%</span>
-                             <span>₹{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="font-semibold">Add: SGST @ {invoice.sgstRate || 0}%</span>
-                            <span>₹{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="font-semibold">Add: IGST @ {invoice.igstRate || 0}%</span>
-                            <span>₹{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </div>
-                        <div className="flex justify-between border-t border-gray-400 mt-1 pt-1"><span className="font-semibold">Total Tax Amount</span> <span>₹{totalTax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
-                        <div className="flex justify-between font-bold border-t border-gray-400 mt-1 pt-1"><span className="font-semibold">Total Amount after Tax</span> <span>₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                        <table className="w-full">
+                            <tbody style={{ color: 'black' }}>
+                                <tr>
+                                    <td className="font-semibold">Total Amount before Tax</td>
+                                    <td className="text-right">₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                </tr>
+                                <tr>
+                                    <td className="font-semibold">Add: CGST @ {invoice.cgstRate || 0}%</td>
+                                    <td className="text-right">₹{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                </tr>
+                                <tr>
+                                    <td className="font-semibold">Add: SGST @ {invoice.sgstRate || 0}%</td>
+                                    <td className="text-right">₹{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                </tr>
+                                <tr>
+                                    <td className="font-semibold">Add: IGST @ {invoice.igstRate || 0}%</td>
+                                    <td className="text-right">₹{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                </tr>
+                                <tr className="border-t border-gray-400">
+                                    <td className="font-semibold pt-1">Total Tax Amount</td>
+                                    <td className="text-right pt-1">₹{totalTax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                </tr>
+                                <tr className="font-bold border-t border-gray-400">
+                                    <td className="font-semibold pt-1">Total Amount after Tax</td>
+                                    <td className="text-right pt-1">₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
