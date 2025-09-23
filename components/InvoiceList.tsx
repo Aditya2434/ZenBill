@@ -59,22 +59,21 @@ export const InvoiceList: React.FC<InvoiceListProps> = ({ invoices, onEdit, onDe
           scale: 2, // Higher scale for better quality
           useCORS: true,
           logging: false,
-          width: elementToCapture.offsetWidth,
-          height: elementToCapture.offsetHeight
         }).then((canvas) => {
             const imgData = canvas.toDataURL('image/png');
             const { jsPDF } = jspdf;
             
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
+            const elementWidth = elementToCapture.offsetWidth;
+            const elementHeight = elementToCapture.offsetHeight;
             
             const pdf = new jsPDF({
-                orientation: canvasWidth > canvasHeight ? 'l' : 'p',
+                orientation: elementWidth > elementHeight ? 'l' : 'p',
                 unit: 'px',
-                format: [canvasWidth, canvasHeight]
+                format: [elementWidth, elementHeight],
+                hotfixes: ['px_scaling'],
             });
 
-            pdf.addImage(imgData, 'PNG', 0, 0, canvasWidth, canvasHeight);
+            pdf.addImage(imgData, 'PNG', 0, 0, elementWidth, elementHeight);
             pdf.save(`Invoice-${invoice.invoiceNumber}.pdf`);
 
             setDownloadingInvoice(null);

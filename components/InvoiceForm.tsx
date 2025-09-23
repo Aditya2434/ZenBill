@@ -19,7 +19,7 @@ interface InvoiceFormProps {
 
 function numberToWordsINR(num: number): string {
     const a = ['', 'ONE ', 'TWO ', 'THREE ', 'FOUR ', 'FIVE ', 'SIX ', 'SEVEN ', 'EIGHT ', 'NINE ', 'TEN ', 'ELEVEN ', 'TWELVE ', 'THIRTEEN ', 'FOURTEEN ', 'FIFTEEN ', 'SIXTEEN ', 'SEVENTEEN ', 'EIGHTEEN ', 'NINETEEN '];
-    const b = ['', '', 'TWENTY ', 'THIRTY ', 'FORTY ', 'FIFTY ', 'SIXTY ', 'SEVENTY ', 'EIGHTY ', 'NINETETY '];
+    const b = ['', '', 'TWENTY ', 'THIRTY ', 'FORTY ', 'FIFTY ', 'SIXTY ', 'SEVENTY ', 'EIGHTY ', 'NINETY '];
 
     const [integerPartStr] = num.toFixed(2).split('.');
     let n = parseInt(integerPartStr, 10);
@@ -260,22 +260,22 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
         scale: 2, 
         useCORS: true,
         logging: false,
-        width: elementToCapture.offsetWidth,
-        height: elementToCapture.offsetHeight
     }).then((canvas) => {
         const imgData = canvas.toDataURL('image/png');
         const { jsPDF } = jspdf;
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
         
+        const elementWidth = elementToCapture.offsetWidth;
+        const elementHeight = elementToCapture.offsetHeight;
+
         const pdf = new jsPDF({
-            orientation: canvasWidth > canvasHeight ? 'l' : 'p',
+            orientation: elementWidth > elementHeight ? 'l' : 'p',
             unit: 'px',
-            format: [canvasWidth, canvasHeight]
+            format: [elementWidth, elementHeight],
+            hotfixes: ['px_scaling'],
         });
         
-        pdf.addImage(imgData, 'PNG', 0, 0, canvasWidth, canvasHeight);
-        pdf.save(`Invoice-${previewInvoiceData.invoiceNumber}.pdf`);
+        pdf.addImage(imgData, 'PNG', 0, 0, elementWidth, elementHeight);
+        pdf.save(`Invoice-${previewInvoiceData.invoiceNumber.replace(/\//g, '-')}.pdf`);
     }).catch(err => {
         console.error("Error generating PDF", err);
     });
