@@ -163,34 +163,32 @@ export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>((
                        <FormFieldPreview label="Total Amount in Words INR" value={numberToWordsINR(total)} fullWidth={true}/>
                     </div>
                     <div className="p-2 text-sm">
-                        <table className="w-full">
-                            <tbody style={{ color: 'black' }}>
-                                <tr>
-                                    <td className="font-semibold">Total Amount before Tax</td>
-                                    <td className="text-right">₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                </tr>
-                                <tr>
-                                    <td className="font-semibold">Add: CGST @ {invoice.cgstRate || 0}%</td>
-                                    <td className="text-right">₹{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                </tr>
-                                <tr>
-                                    <td className="font-semibold">Add: SGST @ {invoice.sgstRate || 0}%</td>
-                                    <td className="text-right">₹{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                </tr>
-                                <tr>
-                                    <td className="font-semibold">Add: IGST @ {invoice.igstRate || 0}%</td>
-                                    <td className="text-right">₹{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                </tr>
-                                <tr className="border-t border-gray-400">
-                                    <td className="font-semibold pt-1">Total Tax Amount</td>
-                                    <td className="text-right pt-1">₹{totalTax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                </tr>
-                                <tr className="font-bold border-t border-gray-400">
-                                    <td className="font-semibold pt-1">Total Amount after Tax</td>
-                                    <td className="text-right pt-1">₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div className="space-y-1">
+                            <div className="flex justify-between">
+                                <span className="font-semibold">Total Amount before Tax</span>
+                                <span className="text-right">₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold">Add: CGST @ {invoice.cgstRate || 0}%</span>
+                                <span className="text-right">₹{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold">Add: SGST @ {invoice.sgstRate || 0}%</span>
+                                <span className="text-right">₹{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold">Add: IGST @ {invoice.igstRate || 0}%</span>
+                                <span className="text-right">₹{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between border-t border-gray-400 pt-1 mt-1">
+                                <span className="font-semibold">Total Tax Amount</span>
+                                <span className="text-right">₹{totalTax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex justify-between border-t border-gray-400 pt-1 mt-1 font-bold">
+                                <span>Total Amount after Tax</span>
+                                <span className="text-right">₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
