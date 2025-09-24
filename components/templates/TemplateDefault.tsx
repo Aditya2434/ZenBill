@@ -111,17 +111,25 @@ export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>((
                 
                 {/* Billed To / Shipped To */}
                 <div className="grid grid-cols-2 border-b border-black">
-                    <div className="border-r border-black p-2">
+                    <div className="border-r border-black p-2 space-y-1">
                         <div className="font-bold bg-gray-200 text-center mb-2 flex items-center justify-center py-1 whitespace-nowrap">DETAIL OF RECEIVER (BILLED TO)</div>
                         <FormFieldPreview label="Name" value={invoice.client.name} />
-                        <FormFieldPreview label="Address" value={invoice.client.address} />
+                        <div className="flex items-start">
+                            <span className="w-1/3 text-sm font-semibold">Address</span>
+                            <span className="px-2">:</span>
+                            <span className="flex-grow text-sm break-words whitespace-pre-line">{invoice.client.address || '-'}</span>
+                        </div>
                         <FormFieldPreview label="GSTIN" value={invoice.client.gstin} />
                         <FormFieldPreview label="State & Code" value={`${invoice.client.state || ''} ${invoice.client.stateCode || ''}`} />
                     </div>
-                    <div className="p-2">
+                    <div className="p-2 space-y-1">
                         <div className="font-bold bg-gray-200 text-center mb-2 flex items-center justify-center py-1 whitespace-nowrap">DETAIL OF RECEIVER (SHIPPED TO)</div>
                         <FormFieldPreview label="Name" value={invoice.shippingDetails?.name} />
-                        <FormFieldPreview label="Address" value={invoice.shippingDetails?.address} />
+                        <div className="flex items-start">
+                            <span className="w-1/3 text-sm font-semibold">Address</span>
+                            <span className="px-2">:</span>
+                            <span className="flex-grow text-sm break-words whitespace-pre-line">{invoice.shippingDetails?.address || '-'}</span>
+                        </div>
                         <FormFieldPreview label="GSTIN" value={invoice.shippingDetails?.gstin} />
                         <FormFieldPreview label="State & Code" value={`${invoice.shippingDetails?.state || ''} ${invoice.shippingDetails?.stateCode || ''}`} />
                     </div>

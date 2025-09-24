@@ -1,8 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Invoice, InvoiceStatus, Client, CompanyProfile } from '../types';
 
-const initialClients: Client[] = [];
-
 export const getFinancialYearString = (date: Date): string => {
     const currentMonth = date.getMonth();
     let financialYearStart;
@@ -72,5 +70,5 @@ export const useInvoices = () => {
     setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
   }, []);
 
-  return { invoices, addInvoice, updateInvoice, deleteInvoice, clients: initialClients };
+  return { invoices, addInvoice, updateInvoice, deleteInvoice };
 };

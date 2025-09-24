@@ -69,7 +69,7 @@ export const TemplateSimple = React.forwardRef<HTMLDivElement, TemplateProps>(({
                 <div className="col-span-2">
                     <p className="text-sm font-semibold text-gray-500">Bill To</p>
                     <p className="font-bold text-gray-800">{invoice.client.name}</p>
-                    <p>{invoice.client.address}</p>
+                    <p className="whitespace-pre-line">{invoice.client.address}</p>
                 </div>
                 <div className="text-right">
                     <p className="text-sm font-semibold text-gray-500">Invoice No.</p>

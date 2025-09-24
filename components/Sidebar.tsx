@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from '../App';
-import { DashboardIcon, DocumentIcon, SettingsIcon } from './icons';
+import { DashboardIcon, DocumentIcon, SettingsIcon, UsersIcon, BoxIcon } from './icons';
 
 interface SidebarProps {
   currentView: View;
@@ -11,6 +11,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon, views: ['dashboard'] },
     { id: 'invoices', label: 'Invoices', icon: DocumentIcon, views: ['invoices', 'create-invoice', 'edit-invoice', 'create-quotation'] },
+    { id: 'clients', label: 'Clients', icon: UsersIcon, views: ['clients'] },
+    { id: 'products', label: 'Products', icon: BoxIcon, views: ['products'] },
     { id: 'settings', label: 'Settings', icon: SettingsIcon, views: ['settings'] },
   ];
 

@@ -76,7 +76,7 @@ export const TemplateCreative = React.forwardRef<HTMLDivElement, TemplateProps>(
                     <div>
                         <strong className="text-gray-500">Billed To:</strong>
                         <p className="font-bold text-gray-800 text-base">{invoice.client.name}</p>
-                        <p className="text-gray-600">{invoice.client.address}</p>
+                        <p className="text-gray-600 whitespace-pre-line">{invoice.client.address}</p>
                     </div>
                     <div className="text-right">
                         <strong className="text-gray-500">Date of Issue:</strong>

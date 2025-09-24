@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Invoice, InvoiceItem, InvoiceStatus, Client, CompanyProfile } from '../types';
+import { Invoice, InvoiceItem, InvoiceStatus, Client, CompanyProfile, Product } from '../types';
 import { View } from '../App';
 import { PlusIcon, TrashIcon, DownloadIcon } from './icons';
-import { useInvoices, generateNextInvoiceNumber, getHighestInvoiceNumber } from '../hooks/useInvoices';
+import { generateNextInvoiceNumber, getHighestInvoiceNumber } from '../hooks/useInvoices';
 import { InvoicePreview } from './InvoicePreview';
 
 declare const html2canvas: any;
@@ -15,6 +15,8 @@ interface InvoiceFormProps {
   setView: (view: View) => void;
   profile: CompanyProfile;
   invoices: Invoice[];
+  clients: Client[];
+  products: Product[];
 }
 
 function numberToWordsINR(num: number): string {
@@ -77,7 +79,7 @@ const FormField = ({ label, name, value, onChange, fullWidth = false, type = "te
     </div>
 );
 
-export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addInvoice, updateInvoice, setView, profile, invoices }) => {
+export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addInvoice, updateInvoice, setView, profile, invoices, clients, products }) => {
   const emptyInvoice = useMemo(() => ({
       client: { id: '', name: '', email: '', address: '', gstin: '', state: '', stateCode: '' },
       items: [{ id: `item-${Date.now()}`, description: '', quantity: 1, unitPrice: 0, hsnCode: '', uom: '' }],
@@ -108,7 +110,6 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
   const [formError, setFormError] = useState<string | null>(null);
   const [showEmptyInvoiceModal, setShowEmptyInvoiceModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const { clients } = useInvoices();
   const previewRef = useRef<HTMLDivElement>(null);
 
 
@@ -166,6 +167,16 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
     const newItems = invoice.items.map((item, i) => {
         if (i === index) {
             const updatedItem = { ...item, [field]: value };
+            
+            // If description changes, check for product match and autofill
+            if (field === 'description') {
+                const selectedProduct = products.find(p => p.name === value);
+                if (selectedProduct) {
+                    updatedItem.hsnCode = selectedProduct.hsnCode || '';
+                    updatedItem.uom = selectedProduct.uom || '';
+                }
+            }
+            
             if (field === 'quantity' || field === 'unitPrice') {
                 updatedItem[field] = Number(value) || 0;
             }
@@ -249,7 +260,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
         total: grandTotal,
         previewInvoiceData: previewData
     };
-  }, [invoice, invoiceNumberPrefix, invoiceNumberSequential, emptyInvoice, profile]);
+  }, [invoice, invoiceNumberPrefix, invoiceNumberSequential, emptyInvoice]);
 
   
   const handleDownloadPdf = () => {
@@ -499,18 +510,29 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
                 
                 {/* Billed To / Shipped To */}
                 <div className="grid grid-cols-2 border-b border-black">
-                    <div className="border-r border-black p-2">
+                    <div className="border-r border-black p-2 space-y-1">
                         <h3 className="font-bold bg-gray-200 text-center mb-2">DETAIL OF RECEIVER (BILLED TO)</h3>
                          <select id="client" value={invoice.client.id} onChange={handleClientChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white text-gray-900 border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md mb-2">
                             <option value="">Select a client or enter details manually</option>
                             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                         <FormField label="Name" name="name" value={invoice.client.name} onChange={(e) => handleNestedChange('client', e)}/>
-                        <FormField label="Address" name="address" value={invoice.client.address} onChange={(e) => handleNestedChange('client', e)}/>
+                        <div className="flex items-start">
+                            <label htmlFor="client-address" className="w-1/3 text-sm font-semibold">Address</label>
+                            <span className="px-2">:</span>
+                            <textarea
+                                id="client-address"
+                                name="address"
+                                value={invoice.client.address || ''}
+                                onChange={(e) => handleNestedChange('client', e)}
+                                rows={3}
+                                className="flex-grow p-1 border border-gray-300 text-sm bg-white text-gray-900"
+                            />
+                        </div>
                         <FormField label="GSTIN" name="gstin" value={invoice.client.gstin} onChange={(e) => handleNestedChange('client', e)}/>
                         <FormField label="State & Code" name="state" value={`${invoice.client.state||''} ${invoice.client.stateCode||''}`} onChange={(e) => handleNestedChange('client', e)}/>
                     </div>
-                    <div className="p-2">
+                    <div className="p-2 space-y-1">
                         <div className="flex justify-between items-center mb-2">
                           <h3 className="font-bold bg-gray-200 text-center flex-grow">DETAIL OF RECEIVER (SHIPPED TO)</h3>
                           <div className="flex items-center ml-2 text-xs">
@@ -519,7 +541,19 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
                           </div>
                         </div>
                         <FormField label="Name" name="name" value={invoice.shippingDetails?.name} onChange={(e) => handleNestedChange('shippingDetails', e)} disabled={sameAsBilling}/>
-                        <FormField label="Address" name="address" value={invoice.shippingDetails?.address} onChange={(e) => handleNestedChange('shippingDetails', e)} disabled={sameAsBilling}/>
+                        <div className="flex items-start">
+                            <label htmlFor="shipping-address" className="w-1/3 text-sm font-semibold">Address</label>
+                            <span className="px-2">:</span>
+                            <textarea
+                                id="shipping-address"
+                                name="address"
+                                value={invoice.shippingDetails?.address || ''}
+                                onChange={(e) => handleNestedChange('shippingDetails', e)}
+                                disabled={sameAsBilling}
+                                rows={3}
+                                className={`flex-grow p-1 border border-gray-300 text-sm bg-white text-gray-900 ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                            />
+                        </div>
                         <FormField label="GSTIN" name="gstin" value={invoice.shippingDetails?.gstin} onChange={(e) => handleNestedChange('shippingDetails', e)} disabled={sameAsBilling}/>
                         <FormField label="State & Code" name="state" value={`${invoice.shippingDetails?.state||''} ${invoice.shippingDetails?.stateCode||''}`} onChange={(e) => handleNestedChange('shippingDetails', e)} disabled={sameAsBilling}/>
                     </div>
@@ -540,9 +574,21 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
                     {invoice.items.map((item, index) => (
                       <div key={item.id} className="grid grid-cols-[3fr,14fr,4fr,4fr,4fr,4fr,5fr,2fr] items-center">
                         <div className="text-center p-1">{index + 1}</div>
-                        <input type="text" placeholder="Item description" value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} className="w-full p-1 border border-gray-300 bg-white text-gray-900"/>
-                        <input type="text" placeholder="HSN" value={item.hsnCode} onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)} className="w-full p-1 border border-gray-300 bg-white text-gray-900" />
-                        <input type="text" placeholder="UOM" value={item.uom} onChange={(e) => handleItemChange(index, 'uom', e.target.value)} className="w-full p-1 border border-gray-300 bg-white text-gray-900" />
+                        
+                        <input 
+                            type="text" 
+                            list="product-list"
+                            placeholder="Item description" 
+                            value={item.description} 
+                            onChange={(e) => handleItemChange(index, 'description', e.target.value)} 
+                            className="w-full p-1 border border-gray-300 bg-white text-gray-900"
+                        />
+                        <datalist id="product-list">
+                            {products.map(p => <option key={p.id} value={p.name} />)}
+                        </datalist>
+
+                        <input type="text" placeholder="HSN" value={item.hsnCode || ''} onChange={(e) => handleItemChange(index, 'hsnCode', e.target.value)} className="w-full p-1 border border-gray-300 bg-white text-gray-900" />
+                        <input type="text" placeholder="UOM" value={item.uom || ''} onChange={(e) => handleItemChange(index, 'uom', e.target.value)} className="w-full p-1 border border-gray-300 bg-white text-gray-900" />
                         <input type="number" placeholder="Qty" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} className="w-full p-1 border border-gray-300 bg-white text-gray-900" />
                         <input type="number" placeholder="Price" value={item.unitPrice} onChange={(e) => handleItemChange(index, 'unitPrice', e.target.value)} className="w-full p-1 border border-gray-300 bg-white text-gray-900" />
                         <p className="text-right p-1">₹{(item.quantity * item.unitPrice).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>

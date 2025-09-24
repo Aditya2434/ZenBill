@@ -15,6 +15,13 @@ export interface Client {
   stateCode?: string;
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  hsnCode?: string;
+  uom?: string;
+}
+
 export interface ShippingDetails {
     name: string;
     address: string;

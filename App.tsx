@@ -5,17 +5,23 @@ import { Dashboard } from './components/Dashboard';
 import { InvoiceList } from './components/InvoiceList';
 import { InvoiceForm } from './components/InvoiceForm';
 import { Profile } from './components/Profile';
+import { ClientManager } from './components/ClientManager';
+import { ProductManager } from './components/ProductManager';
 import { useInvoices } from './hooks/useInvoices';
 import { useProfile } from './hooks/useProfile';
+import { useClients } from './hooks/useClients';
+import { useProducts } from './hooks/useProducts';
 import { Invoice } from './types';
 
-export type View = 'dashboard' | 'invoices' | 'create-invoice' | 'edit-invoice' | 'create-quotation' | 'settings';
+export type View = 'dashboard' | 'invoices' | 'create-invoice' | 'edit-invoice' | 'create-quotation' | 'settings' | 'clients' | 'products';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null);
   const { invoices, addInvoice, updateInvoice, deleteInvoice } = useInvoices();
   const { profile, updateProfile } = useProfile();
+  const { clients, addClient, updateClient, deleteClient } = useClients();
+  const { products, addProduct, updateProduct, deleteProduct } = useProducts();
 
   const handleSetView = useCallback((view: View) => {
     setCurrentView(view);
@@ -37,9 +43,9 @@ const App: React.FC = () => {
       case 'invoices':
         return <InvoiceList invoices={invoices} onEdit={handleEditInvoice} onDelete={deleteInvoice} setView={handleSetView} profile={profile} />;
       case 'create-invoice':
-        return <InvoiceForm addInvoice={handleAddInvoice} setView={handleSetView} profile={profile} invoices={invoices} />;
+        return <InvoiceForm addInvoice={handleAddInvoice} setView={handleSetView} profile={profile} invoices={invoices} clients={clients} products={products} />;
       case 'edit-invoice':
-        return invoiceToEdit ? <InvoiceForm existingInvoice={invoiceToEdit} updateInvoice={updateInvoice} setView={handleSetView} profile={profile} invoices={invoices} /> : <InvoiceList invoices={invoices} onEdit={handleEditInvoice} onDelete={deleteInvoice} setView={handleSetView} profile={profile} />;
+        return invoiceToEdit ? <InvoiceForm existingInvoice={invoiceToEdit} updateInvoice={updateInvoice} setView={handleSetView} profile={profile} invoices={invoices} clients={clients} products={products} /> : <InvoiceList invoices={invoices} onEdit={handleEditInvoice} onDelete={deleteInvoice} setView={handleSetView} profile={profile} />;
       case 'create-quotation':
         return (
             <div className="text-center p-8 bg-white rounded-lg shadow-sm border border-gray-200">
@@ -47,6 +53,10 @@ const App: React.FC = () => {
                 <p className="text-gray-500 mt-2">This feature is under construction and will be available soon!</p>
             </div>
         );
+      case 'clients':
+        return <ClientManager clients={clients} addClient={addClient} updateClient={updateClient} deleteClient={deleteClient} />;
+      case 'products':
+        return <ProductManager products={products} addProduct={addProduct} updateProduct={updateProduct} deleteProduct={deleteProduct} />;
       case 'settings':
         return <Profile profile={profile} updateProfile={updateProfile} />;
       default:
