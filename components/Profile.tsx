@@ -153,6 +153,14 @@ export const Profile: React.FC<ProfileProps> = ({ profile, updateProfile }) => {
                         <label htmlFor="pan" className="block text-sm font-medium text-gray-700">PAN</label>
                         <input type="text" name="pan" id="pan" value={formData.pan} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white text-gray-900" />
                     </div>
+                    <div>
+                        <label htmlFor="companyState" className="block text-sm font-medium text-gray-700">State</label>
+                        <input type="text" name="companyState" id="companyState" value={formData.companyState || ''} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white text-gray-900" />
+                    </div>
+                    <div>
+                        <label htmlFor="companyStateCode" className="block text-sm font-medium text-gray-700">State Code</label>
+                        <input type="text" name="companyStateCode" id="companyStateCode" value={formData.companyStateCode || ''} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white text-gray-900" />
+                    </div>
                 </div>
 
                  <div>

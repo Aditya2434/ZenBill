@@ -6,6 +6,8 @@ const initialProfile: CompanyProfile = {
     companyAddress: '',
     gstin: '',
     pan: '',
+    companyState: '',
+    companyStateCode: '',
     companyAcronym: '',
     logo: '',
     companySeal: '',

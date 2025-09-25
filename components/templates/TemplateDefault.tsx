@@ -98,7 +98,7 @@ export const TemplateDefault = React.forwardRef<HTMLDivElement, TemplateProps>((
                         <div className="flex items-center"><span className="w-1/2 font-semibold">Tax Invoice No.</span>: <span className="pl-2">{invoice.invoiceNumber}</span></div>
                         <div className="flex items-center"><span className="w-1/2 font-semibold">Date</span>: <span className="pl-2">{invoice.issueDate}</span></div>
                         <div className="flex items-center"><span className="w-1/2 font-semibold">Tax Payable on Reverse Charge</span>: <span className="pl-2">{invoice.taxPayableOnReverseCharge ? 'Yes' : 'No'}</span></div>
-                        <div className="flex items-center"><span className="w-1/2 font-semibold">State & Code</span>: <span className="pl-2">-</span></div>
+                        <div className="flex items-center"><span className="w-1/2 font-semibold">State & Code</span>: <span className="pl-2">{`${profile.companyState || ''} ${profile.companyStateCode || ''}`.trim() || '-'}</span></div>
                     </div>
                     <div className="p-2 space-y-1">
                         <FormFieldPreview label="Transport Mode" value={invoice.transportMode} />

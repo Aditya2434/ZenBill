@@ -153,6 +153,27 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
       setInvoice({ ...invoice, client: emptyInvoice.client });
     }
   };
+
+  const handleShippingClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedClient = clients.find(c => c.id === e.target.value);
+    
+    if (e.target.value) {
+        setSameAsBilling(false);
+    }
+
+    if (selectedClient) {
+      const { name, address, gstin, state, stateCode } = selectedClient;
+      setInvoice(prev => ({
+        ...prev,
+        shippingDetails: { ...prev.shippingDetails, name, address, gstin, state, stateCode }
+      }));
+    } else {
+      setInvoice(prev => ({
+        ...prev,
+        shippingDetails: { name: '', address: '', gstin: '', state: '', stateCode: '' }
+      }));
+    }
+  };
   
   const handleSequentialNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormError(null);
@@ -497,7 +518,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
                         </div>
                         <div className="flex items-center"><label className="w-1/2 font-semibold">Date</label>: <input type="date" name="issueDate" value={invoice.issueDate} onChange={handleInputChange} className="p-1 border border-gray-300 w-1/2 bg-white text-gray-900" /></div>
                         <div className="flex items-center"><label className="w-1/2 font-semibold">Tax Payable on Reverse Charge</label>: <input type="checkbox" name="taxPayableOnReverseCharge" checked={invoice.taxPayableOnReverseCharge} onChange={handleInputChange} className="ml-2" /></div>
-                        <div className="flex items-center"><label className="w-1/2 font-semibold">State & Code</label>: <input type="text" placeholder="State & Code" className="p-1 border border-gray-300 w-1/2 bg-white text-gray-900"/></div>
+                        <div className="flex items-center"><label className="w-1/2 font-semibold">State & Code</label>: <span className="p-1">{`${profile.companyState || ''} ${profile.companyStateCode || ''}`.trim()}</span></div>
                     </div>
                     <div className="p-2 space-y-1">
                         <FormField label="Transport Mode" name="transportMode" value={invoice.transportMode} onChange={handleInputChange}/>
@@ -540,6 +561,15 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ existingInvoice, addIn
                             <label htmlFor="sameAsBilling">Same as billing</label>
                           </div>
                         </div>
+                         <select
+                            id="shippingClient"
+                            onChange={handleShippingClientChange}
+                            disabled={sameAsBilling}
+                            className={`mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white text-gray-900 border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md mb-2 ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                         >
+                            <option value="">Select a client or enter details manually</option>
+                            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
                         <FormField label="Name" name="name" value={invoice.shippingDetails?.name} onChange={(e) => handleNestedChange('shippingDetails', e)} disabled={sameAsBilling}/>
                         <div className="flex items-start">
                             <label htmlFor="shipping-address" className="w-1/3 text-sm font-semibold">Address</label>

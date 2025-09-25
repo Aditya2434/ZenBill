@@ -84,6 +84,8 @@ export interface CompanyProfile {
   companyAddress: string;
   gstin: string;
   pan: string;
+  companyState?: string;
+  companyStateCode?: string;
   companyAcronym?: string;
   logo?: string; // base64 encoded image
   companySeal?: string; // base64 encoded image
