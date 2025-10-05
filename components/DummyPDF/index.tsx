@@ -70,8 +70,6 @@ const styles = StyleSheet.create({
   companyQR: {
     height: 36,
     width: 36,
-    borderWidth: 1,
-    borderColor: "black",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -588,9 +586,7 @@ function DummyPDF({ invoice, profile }: DummyPDFProps) {
               </Text>
             </View>
 
-            <View style={styles.companyQR}>
-              <Text>QR</Text>
-            </View>
+            <View style={styles.companyQR}></View>
           </View>
 
           {/* Title Tax invoice */}
