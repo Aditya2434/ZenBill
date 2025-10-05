@@ -208,6 +208,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const [formError, setFormError] = useState<string | null>(null);
   const [showEmptyInvoiceModal, setShowEmptyInvoiceModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showInvoiceNumberTip, setShowInvoiceNumberTip] = useState(false);
+  const [hasSeenInvoiceNumberTip, setHasSeenInvoiceNumberTip] = useState(false);
 
   useEffect(() => {
     if (existingInvoice) {
@@ -218,6 +220,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         setSameAsBilling(false);
       } else {
         setSameAsBilling(true);
+      }
+      // Populate invoice number prefix and editable sequential from existing invoice
+      const parts = existingInvoice.invoiceNumber.split("/");
+      if (parts.length === 3) {
+        setInvoiceNumberPrefix(`${parts[0]}/${parts[1]}/`);
+        setInvoiceNumberSequential(parts[2]);
       }
     } else {
       setInvoice(emptyInvoice);
@@ -301,6 +309,28 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     const numericValue = value.replace(/[^0-9]/g, ""); // Only allow numbers
     if (numericValue.length <= 3) {
       setInvoiceNumberSequential(numericValue);
+      // Live validations: duplicate and highest-number threshold
+      const candidate = `${invoiceNumberPrefix}${numericValue.padStart(
+        3,
+        "0"
+      )}`;
+      const isDuplicate = invoices.some(
+        (inv) => inv.invoiceNumber.toLowerCase() === candidate.toLowerCase()
+      );
+      const highestNumber = getHighestInvoiceNumber(
+        invoices,
+        invoiceNumberPrefix
+      );
+      let newError: string | null = null;
+      if (isDuplicate) {
+        newError = "Invoice number already exists.";
+      } else if (numericValue !== "" && Number(numericValue) <= highestNumber) {
+        newError = `Invoice no. must be > ${String(highestNumber).padStart(
+          3,
+          "0"
+        )}.`;
+      }
+      setFormError(newError);
     }
   };
 
@@ -611,6 +641,49 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </div>
         </div>
       )}
+      {showInvoiceNumberTip && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => {
+            setShowInvoiceNumberTip(false);
+            setHasSeenInvoiceNumberTip(true);
+          }}
+        >
+          <div
+            className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-medium text-gray-900">
+              Invoice Number
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              You can edit only the last three digits of the invoice number.
+            </p>
+            <div className="mt-4 flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInvoiceNumberTip(false);
+                  setHasSeenInvoiceNumberTip(true);
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInvoiceNumberTip(false);
+                  setHasSeenInvoiceNumberTip(true);
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-800">
@@ -710,11 +783,11 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         type="text"
                         value={invoiceNumberSequential}
                         onChange={handleSequentialNumberChange}
-                        onFocus={() =>
-                          alert(
-                            "You can edit only the last three digits of the invoice number."
-                          )
-                        }
+                        onFocus={() => {
+                          if (!hasSeenInvoiceNumberTip) {
+                            setShowInvoiceNumberTip(true);
+                          }
+                        }}
                         className="p-1 w-16 text-sm text-gray-900 bg-white focus:outline-none"
                         maxLength={3}
                       />
