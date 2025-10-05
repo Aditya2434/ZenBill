@@ -943,7 +943,9 @@ function DummyPDF({ invoice, profile }: DummyPDFProps) {
                     </Text>
                   </View>
                   <View style={[styles.tableCellContainer, styles.qty]}>
-                    <Text style={[styles.tableCellText, styles.textCenter]}>
+                    <Text
+                      style={[styles.tableCellText, styles.textRightPadded]}
+                    >
                       {item.quantity}
                     </Text>
                   </View>
