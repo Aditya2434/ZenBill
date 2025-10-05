@@ -554,6 +554,12 @@ function DummyPDF({ invoice, profile }: DummyPDFProps) {
   const totalTax = cgstAmount + sgstAmount + igstAmount;
   const total = subtotal + totalTax;
 
+  const totalRows = 11;
+  const rows = Array.from(
+    { length: Math.max(invoice.items.length, totalRows) },
+    (_, i) => invoice.items[i]
+  );
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -918,49 +924,55 @@ function DummyPDF({ invoice, profile }: DummyPDFProps) {
                 </Text>
               </View>
             </View>
-            {invoice.items.map((item, index) => {
-              const lineTotal = item.quantity * item.unitPrice;
+            {rows.map((item, index) => {
+              const hasItem = !!item;
+              const lineTotal = hasItem ? item.quantity * item.unitPrice : 0;
               return (
-                <View key={item.id || String(index)} style={styles.row}>
+                <View
+                  key={
+                    (hasItem && (item.id || String(index))) || `empty-${index}`
+                  }
+                  style={styles.row}
+                >
                   <View style={[styles.tableCellContainer, styles.serialNo]}>
                     <Text style={[styles.tableCellText, styles.textCenter]}>
-                      {index + 1}
+                      {hasItem ? index + 1 : ""}
                     </Text>
                   </View>
                   <View style={[styles.tableCellContainer, styles.productName]}>
                     <Text style={[styles.tableCellText, styles.textLeft]}>
-                      {item.description}
+                      {hasItem ? item.description : ""}
                     </Text>
                   </View>
                   <View style={[styles.tableCellContainer, styles.hsnCode]}>
                     <Text style={[styles.tableCellText, styles.textCenter]}>
-                      {item.hsnCode || ""}
+                      {hasItem ? item.hsnCode || "" : ""}
                     </Text>
                   </View>
                   <View style={[styles.tableCellContainer, styles.uom]}>
                     <Text style={[styles.tableCellText, styles.textCenter]}>
-                      {item.uom || ""}
+                      {hasItem ? item.uom || "" : ""}
                     </Text>
                   </View>
                   <View style={[styles.tableCellContainer, styles.qty]}>
                     <Text
                       style={[styles.tableCellText, styles.textRightPadded]}
                     >
-                      {item.quantity}
+                      {hasItem ? item.quantity : ""}
                     </Text>
                   </View>
                   <View style={[styles.tableCellContainer, styles.rate]}>
                     <Text
                       style={[styles.tableCellText, styles.textRightPadded]}
                     >
-                      {formatCurrencyINR(item.unitPrice)}
+                      {hasItem ? formatCurrencyINR(item.unitPrice) : ""}
                     </Text>
                   </View>
                   <View style={[styles.tableCellContainer, styles.total]}>
                     <Text
                       style={[styles.tableCellText, styles.textRightPadded]}
                     >
-                      {formatCurrencyINR(lineTotal)}
+                      {hasItem ? formatCurrencyINR(lineTotal) : ""}
                     </Text>
                   </View>
                 </View>
